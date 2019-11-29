@@ -1,24 +1,53 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { DragDropContext } from "react-beautiful-dnd";
+import "./App.css";
+import TaskList from "./TaskList";
+import useTaskStorage from "./useTaskStorage";
 
 function App() {
+  // const { taskLists, moveTask } = useTaskStorage();
+
+  const {
+    taskLists,
+    addTask,
+    toggleTaskCompleted,
+    deleteTask,
+    editTaskName,
+    moveTask,
+    uncheckAllTasks
+  } = useTaskStorage();
+  const onDragEnd = result => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return;
+    moveTask(
+      source.droppableId,
+      destination.droppableId,
+      source.index,
+      destination.index
+    );
+  };
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <DragDropContext onDragEnd={onDragEnd}>
+        {Object.entries(taskLists).map(([taskId, task]) => (
+          <TaskList
+            title={task.name}
+            key={taskId}
+            taskId={taskId}
+            addTask={addTask}
+            toggleTaskCompleted={toggleTaskCompleted}
+            deleteTask={deleteTask}
+            editTaskName={editTaskName}
+            taskLists={taskLists}
+            uncheckAllTasks={uncheckAllTasks}
+          />
+        ))}
+      </DragDropContext>
     </div>
   );
 }
