@@ -11,10 +11,17 @@ const initialState = {
   }
 };
 
+const getId = () => String(Math.floor(Math.random() * 100000));
+
 const createTask = ({ taskName }) => ({
   name: taskName,
   completed: false,
-  id: String(Math.floor(Math.random() * 1000))
+  id: String(getId())
+});
+
+const createList = ({ listName }) => ({
+  name: listName,
+  tasks: []
 });
 
 const editTask = (taskLists, taskListId, taskIndex, cb) => {
@@ -39,6 +46,10 @@ const editTaskList = (taskLists, taskListId, cb) => {
 
 export default function useTaskStorage() {
   const [taskLists, setTasks] = usePersistedState("tasks", initialState);
+  const [taskListsOrder, setTasksListOrder] = usePersistedState(
+    "taskListsOrder",
+    []
+  );
 
   const addTask = ({ taskId, taskName }) => {
     const activeTaskList = taskLists[taskId];
@@ -128,13 +139,42 @@ export default function useTaskStorage() {
     setTasks(newState);
   };
 
+  const addList = newListName => {
+    const id = getId();
+    const newState = {
+      ...taskLists,
+      [id]: createList({ listName: newListName })
+    };
+
+    setTasksListOrder([...taskListsOrder, id]);
+    setTasks(newState);
+  };
+
+  const deleteList = taskListId => {
+    const { [taskListId]: removedTaskList, ...newState } = taskLists;
+    const newTaskListsOrder = taskListsOrder.filter(x => x !== taskListId);
+    setTasksListOrder(newTaskListsOrder);
+    setTasks(newState);
+  };
+
+  const moveTaskList = (taskListId, sourceIndex, destinationIndex) => {
+    const newTaskListsOrder = Array.from(taskListsOrder);
+    newTaskListsOrder.splice(sourceIndex, 1);
+    newTaskListsOrder.splice(destinationIndex, 0, taskListId);
+    setTasksListOrder(newTaskListsOrder);
+  };
+
   return {
     addTask,
     taskLists,
+    taskListsOrder,
     toggleTaskCompleted,
     deleteTask,
     editTaskName,
     moveTask,
-    uncheckAllTasks
+    uncheckAllTasks,
+    addList,
+    deleteList,
+    moveTaskList
   };
 }
